@@ -7456,7 +7456,7 @@ dhd_bus_perform_flr(dhd_bus_t *bus, bool force_fail)
 	DHD_INFO(("Read Device Capability: reg=0x%x read val=0x%x flr_capab=0x%x\n",
 		PCIE_CFG_DEVICE_CAPABILITY, val, flr_capab));
 	if (!flr_capab) {
-		if (bus->sih->buscorerev < 64) {
+		if (bus->sih && bus->sih->buscorerev < 64) {
 			DHD_ERROR(("%s: Chip does not support FLR\n",
 				__FUNCTION__));
 			return BCME_UNSUPPORTED;
@@ -7984,8 +7984,8 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 
 #ifdef OEM_ANDROID
 			/*
-			 * This will be enabled from phone platforms to
-			 * reset (FLR) dongle during Wifi ON.
+			 * For android platforms reset (FLR) dongle during Wifi ON
+			 * this should be done before dongle attach
 			 */
 			dhdpcie_dongle_reset(bus);
 #endif /* OEM_ANDROID */

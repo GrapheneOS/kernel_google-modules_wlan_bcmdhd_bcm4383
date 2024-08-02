@@ -10526,6 +10526,7 @@ static s32
 wl_cfgnan_unregister_nmi_ndev(struct bcm_cfg80211 *cfg)
 {
 	struct wireless_dev *wdev;
+	int refcnt;
 
 	if (!cfg) {
 		WL_ERR(("NMI IF unreg, invalid cfg \n"));
@@ -10536,7 +10537,14 @@ wl_cfgnan_unregister_nmi_ndev(struct bcm_cfg80211 *cfg)
 		goto free_wdev;
 	}
 
+	refcnt = netdev_refcnt_read(cfg->nmi_ndev);
+	WL_ERR(("refcnt before unregistering NAN NMI ndev: %d \n", refcnt));
+
 	dhd_unregister_net(cfg->nmi_ndev, true);
+
+	refcnt = netdev_refcnt_read(cfg->nmi_ndev);
+	WL_ERR(("refcnt after unregistering NAN NMI ndev: %d \n", refcnt));
+
 	free_netdev(cfg->nmi_ndev);
 	cfg->nmi_ndev = NULL;
 
@@ -10556,6 +10564,7 @@ int
 wl_cfgnan_attach(struct bcm_cfg80211 *cfg)
 {
 	int err = BCME_OK;
+	int refcnt = 0;
 	wl_nancfg_t *nancfg = NULL;
 
 	if (cfg) {
@@ -10584,6 +10593,9 @@ wl_cfgnan_attach(struct bcm_cfg80211 *cfg)
 	nancfg->nan_dp_state = NAN_DP_STATE_DISABLED;
 	init_waitqueue_head(&nancfg->ndp_if_change_event);
 
+	refcnt = netdev_refcnt_read(cfg->nmi_ndev);
+	WL_ERR(("refcnt after NAN NMI ndev reg: %d, cfg->nmi_ndev.name %s\n",
+			refcnt, cfg->nmi_ndev->name));
 done:
 	return err;
 

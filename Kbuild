@@ -30,6 +30,12 @@ ifeq ($(KERNEL_SRC),)
   endif
 endif
 
+# undef hikey and STB when GG is defined
+ifneq ($(CONFIG_SOC_GOOGLE),)
+  CONFIG_ARCH_HISI=
+  CONFIG_ARCH_BRCMSTB=
+endif
+
 #####################
 # SDIO/PCIe Basic feature
 #####################
