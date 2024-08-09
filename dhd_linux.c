@@ -20187,6 +20187,7 @@ dhd_mem_dump(void *handle, void *event_info, u8 event)
 	trap_t *tr;
 	uint32 uc_status;
 	bool collect_coredump = FALSE;
+	char trap_str[DHD_TRAP_STR_LEN] = {0};
 #endif /* DHD_COREDUMP */
 	uint32 memdump_type;
 #ifdef DHD_SSSR_DUMP
@@ -20372,13 +20373,18 @@ dhd_mem_dump(void *handle, void *event_info, u8 event)
 	bzero(dhdp->memdump_str, DHD_MEMDUMP_LONGSTR_LEN);
 	dhd_convert_memdump_type_to_str(memdump_type, dhdp->memdump_str,
 		DHD_MEMDUMP_LONGSTR_LEN, dhdp->debug_dump_subcmd);
-	if (memdump_type == DUMP_TYPE_DONGLE_TRAP &&
-		dhdp->dongle_trap_occured == TRUE) {
+
+	if (dhdp->dongle_trap_occured) {
 		tr = &dhdp->last_trap_info;
 		dhd_lookup_map(dhdp->osh, map_path,
 			ltoh32(tr->epc), pc_fn, ltoh32(tr->r14), lr_fn);
-		sprintf(&dhdp->memdump_str[strlen(dhdp->memdump_str)], "_%.79s_%.79s",
-				pc_fn, lr_fn);
+		snprintf(trap_str, DHD_TRAP_STR_LEN, "_%.79s_%.79s", pc_fn, lr_fn);
+	}
+
+	if (memdump_type == DUMP_TYPE_DONGLE_TRAP &&
+		dhdp->dongle_trap_occured == TRUE) {
+		sprintf(&dhdp->memdump_str[strlen(dhdp->memdump_str)],
+			"%s", trap_str);
 
 		/* append additional status code with tag string */
 		dhd_coredump_add_status(dhdp->memdump_str, "UC", uc_status);
@@ -20387,8 +20393,8 @@ dhd_mem_dump(void *handle, void *event_info, u8 event)
 
 #ifdef DHD_SSSR_COREDUMP
 	/* Only for dongle trap case, generate coredump header and TLVs */
-	if (dhd_is_coredump_reqd(dhdp->memdump_str,
-		strnlen(dhdp->memdump_str, DHD_MEMDUMP_LONGSTR_LEN), dhdp)) {
+	if (dhd_is_coredump_reqd(trap_str,
+		strnlen(trap_str, DHD_TRAP_STR_LEN), dhdp)) {
 		ret = dhd_collect_coredump(dhdp, dump, collect_sssr);
 		if (ret == BCME_ERROR) {
 			DHD_ERROR(("%s: dhd_collect_coredump() failed.\n",
